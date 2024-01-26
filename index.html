@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supplement Tracker Dashboard</title>
+    <!-- Tailwind CSS -->
+    <link href="https://unpkg.com/tailwindcss@^2.0/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700&display=swap" rel="stylesheet">
+    <style>
+        /* Additional CSS if needed */
+        body {
+            font-family: 'Open Sans', sans-serif;
+        }
+        .card {
+            transition: box-shadow 0.3s;
+            background-color: #ffffff; /* Light theme card background */
+        }
+        .card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .sidebar {
+            width: 300px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            overflow: auto;
+            background-color: #f8fafc; /* Light theme sidebar background */
+            border-right: 1px solid #e2e8f0;
+        }
+        .content {
+            margin-left: 300px;
+            padding: 1rem;
+            background-color: #edf2f7; /* Light theme content background */
+        }
+    </style>
+</head>
+<body class="bg-gray-100"> <!-- Light theme body background -->
+    <!-- Sidebar -->
+    <div class="sidebar p-4">
+        <h2 class="text-xl font-semibold mb-2">Add Supplement</h2>
+        <!-- Add Supplement Form -->
+        <div class="mb-4">
+            <input id="supplementName" class="w-full mb-2 p-2 border rounded" type="text" placeholder="Supplement Name">
+            <input id="supplementDosage" class="w-full mb-2 p-2 border rounded" type="text" placeholder="Dosage">
+            <button class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="addSupplement()">Add Supplement</button>
+        </div>
+        <h2 class="text-xl font-semibold mb-2">Recently Added</h2>
+        <ul id="recentlyAddedList" class="list-disc pl-5">
+            <!-- Recently added supplements will be listed here -->
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+        <!-- Usage Log Table -->
+        <div class="mb-4">
+            <h2 class="text-xl font-semibold mb-2">Supplement Usage Log</h2>
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <table class="min-w-full leading-normal">
+                    <thead>
+                        <tr>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Supplement
+                            </th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Dosage
+                            </th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                Last Taken
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="logBody">
+                        <!-- Log entries will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Supplement Cards -->
+        <div id="supplementCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <!-- Cards will be added here by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        // JavaScript for interactivity
+        let usageLog = JSON.parse(localStorage.getItem('usageLog')) || [];
+        let supplements = JSON.parse(localStorage.getItem('supplements')) || [];
+
+        function logSupplement(name, dosage) {
+            const now = new Date();
+            const logEntry = {
+                supplement: name,
+                dosage: dosage,
+                time: now.toLocaleString()
+            };
+            usageLog.unshift(logEntry); // Add to the beginning of the log
+            localStorage.setItem('usageLog', JSON.stringify(usageLog)); // Store in localStorage
+            updateLogTable();
+        }
+
+        function updateLogTable() {
+            const logBody = document.getElementById('logBody');
+            logBody.innerHTML = ''; // Clear existing log entries
+            usageLog.forEach(entry => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm">
+                        <div class="flex items-center">
+                            <div class="ml-3">
+                                <p class="text-gray-900 whitespace-no-wrap">
+                                    ${entry.supplement}
+                                </p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm">
+                        <p class="text-gray-900 whitespace-no-wrap">${entry.dosage}</p>
+                    </td>
+                    <td class="px-5 py-3 border-b border-gray-200 bg-white text-sm">
+                        <p class="text-gray-900 whitespace-no-wrap">${entry.time}</p>
+                    </td>
+                `;
+                logBody.appendChild(row);
+            });
+        }
+
+        function addSupplement() {
+            const name = document.getElementById('supplementName').value.trim();
+            const dosage = document.getElementById('supplementDosage').value.trim();
+            if (name && dosage) {
+                supplements.unshift({ name, dosage });
+                localStorage.setItem('supplements', JSON.stringify(supplements)); // Store in localStorage
+                updateSupplementCards();
+                updateRecentlyAddedList(name, dosage);
+            }
+        }
+
+        function updateSupplementCards() {
+            const cardsContainer = document.getElementById('supplementCards');
+            cardsContainer.innerHTML = ''; // Clear existing cards
+            supplements.forEach(supplement => {
+                const card = document.createElement('div');
+                card.className = 'card bg-white p-4 rounded-lg shadow';
+                card.innerHTML = `
+                    <h3 class="text-lg font-semibold mb-2">${supplement.name}</h3>
+                    <p class="text-gray-700 mb-4">Dosage: ${supplement.dosage}</p>
+                    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="logSupplement('${supplement.name}', '${supplement.dosage}')">Log Usage</button>
+                `;
+                cardsContainer.appendChild(card);
+            });
+        }
+
+        function updateRecentlyAddedList(name, dosage) {
+            const recentlyAddedList = document.getElementById('recentlyAddedList');
+            const listItem = document.createElement('li');
+            listItem.textContent = `${name} - ${dosage}`;
+            recentlyAddedList.insertBefore(listItem, recentlyAddedList.firstChild);
+        }
+
+        // Load stored data on page load
+        window.onload = function() {
+            updateLogTable();
+            updateSupplementCards();
+        };
+    </script>
+</body>
+</html>
